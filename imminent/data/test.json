@@ -1,0 +1,38 @@
+{
+    "_links": {
+        "self": {
+            "href": "https://eu.api.blizzard.com/profile/wow/character/twisting-nether/kugarina/character-media?namespace=profile-eu"
+        }
+    },
+    "character": {
+        "key": {
+            "href": "https://eu.api.blizzard.com/profile/wow/character/twisting-nether/kugarina?namespace=profile-eu"
+        },
+        "name": "Kugarina",
+        "id": 146146060,
+        "realm": {
+            "key": {
+                "href": "https://eu.api.blizzard.com/data/wow/realm/625?namespace=dynamic-eu"
+            },
+            "name": {
+                "en_US": "Twisting Nether",
+                "es_MX": "Twisting Nether",
+                "pt_BR": "Twisting Nether",
+                "de_DE": "Twisting Nether",
+                "en_GB": "Twisting Nether",
+                "es_ES": "Twisting Nether",
+                "fr_FR": "Twisting Nether",
+                "it_IT": "Twisting Nether",
+                "ru_RU": "Twisting Nether",
+                "ko_KR": "Twisting Nether",
+                "zh_TW": "æ‰­æ›²è™›ç©º",
+                "zh_CN": "é»‘æš—è™šç©º"
+            },
+            "id": 625,
+            "slug": "twisting-nether"
+        }
+    },
+    "avatar_url": "https://render-eu.worldofwarcraft.com/character/twisting-nether/12/146146060-avatar.jpg",
+    "bust_url": "https://render-eu.worldofwarcraft.com/character/twisting-nether/12/146146060-inset.jpg",
+    "render_url": "https://render-eu.worldofwarcraft.com/character/twisting-nether/12/146146060-main.jpg"
+}
