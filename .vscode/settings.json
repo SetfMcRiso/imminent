@@ -1,0 +1,13 @@
+{
+  "python.linting.enabled": true,
+  "python.linting.pycodestyleEnabled": true,
+  "python.linting.pylintEnabled": true,
+  "git.autofetch": true,
+  "python.dataScience.sendSelectionToInteractiveWindow": true,
+  "workbench.colorTheme": "Community Material Theme Palenight High Contrast",
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.formatOnSave": true,
+  "C_Cpp.updateChannel": "Insiders",
+  "python.testing.nosetestsEnabled": true,
+  "workbench.settings.editor": "json"
+}
