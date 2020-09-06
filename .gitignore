@@ -1,0 +1,6 @@
+
+*.pyc
+
+imminent/data/.prettierrc
+
+imminent/resources/client.json
