@@ -3,5 +3,7 @@
     "equipment": "equipment",
     "professions": "professions",
     "quests": "quests/completed",
-    "mythic_plus": "mythic-keystone-profile/season/4"
+    "mythic_plus": "mythic-keystone-profile/season/4",
+    "specializations": "specializations",
+    "character": ""
 }

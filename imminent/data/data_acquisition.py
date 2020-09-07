@@ -79,4 +79,4 @@ class Data():
 
 if __name__ == "__main__":
     kugar = Data('kugartwo', 'twisting-nether')
-    kugar.download_data('mythic_plus')
+    kugar.download_data('quests')
