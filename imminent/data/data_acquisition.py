@@ -2,17 +2,21 @@ import subprocess
 import json
 import os
 import ast
+import pytz
 from pathlib import Path
-from datetime import datetime
+import requests
+from datetime import datetime, timedelta
 from imminent.setting.setting_handling import JSON
 from imminent.utilities.file_handling import ResourceHandler
 from imminent.utilities.file_handling import FileHandler
-import requests
 
 enchant_list = ['FINGER_1',
                 'FINGER_2',
                 'MAIN_HAND',
                 'OFF_HAND']
+shadowlands_release_timestamp = 1603753200
+bfa_timestamp = 1577836800
+test_timestamp = 1598914800
 
 
 class Data():
@@ -161,8 +165,26 @@ class Data():
                     missing_enchants_list.append(_['slot']['type'])
         return missing_enchants_list
 
+    def _get_reset_timestamp_list(self):
+        starting_timestamp = test_timestamp
+        reset_list = []
+        today_weekday = datetime.today().weekday()
+        days_from_reset = (today_weekday + 5) % 7
+        last_wednesday = datetime.today() - timedelta(days=days_from_reset)
+        last_wednesday_string = str(last_wednesday)[0:11:] + '07:00:00'
+        last_wednesday_object = datetime.strptime(
+            last_wednesday_string, '%Y-%m-%d %H:%M:%S').replace(
+                tzinfo=pytz.UTC)
+        last_wednesday_timestamp = datetime.timestamp(last_wednesday_object)
+        while last_wednesday_timestamp >= starting_timestamp:
+            reset_list.append(last_wednesday_timestamp)
+            last_wednesday_object = last_wednesday_object - timedelta(days=7)
+            last_wednesday_timestamp = datetime.timestamp(
+                last_wednesday_object)
+        return reset_list
+
 
 if __name__ == "__main__":
     kugar = Data('kugarina', 'twisting-nether')
     kugar.download_data('equipment')
-    print(kugar.get_non_enchanted_items())
+    print(kugar._get_reset_timestamp_list())
