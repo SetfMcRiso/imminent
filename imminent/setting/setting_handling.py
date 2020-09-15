@@ -47,7 +47,7 @@ class JSON():
         if the information is valid
         """
         with open(self.filepath, 'w+', encoding='utf-8') as fil:
-            json.dump(self.values, fil, ensure_ascii=False, indent=4)
+            json.dump(self.values, fil, ensure_ascii=True, indent=4)
         return True
 
     def _has_dict_value(self, dictionary, attribute_list):

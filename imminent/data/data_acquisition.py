@@ -6,9 +6,11 @@ import pytz
 from pathlib import Path
 import requests
 from datetime import datetime, timedelta
+from scrapy.crawler import CrawlerProcess
 from imminent.setting.setting_handling import JSON
 from imminent.utilities.file_handling import ResourceHandler
 from imminent.utilities.file_handling import FileHandler
+from imminent.data.rio_scraping import RioScrapingSpider
 
 enchant_list = ['FINGER_1',
                 'FINGER_2',
@@ -24,15 +26,16 @@ class Data():
     Class that is handling the data acquisition.
     """
 
-    def __init__(self, name=None, realm=None):
-        self.name = name
-        self.realm = realm
+    def __init__(self, char_name=None, realm_slug=None, region='eu'):
+        self.char_name = char_name
+        self.realm_slug = realm_slug
+        self.region = region
         self.base_url = 'https://eu.api.blizzard.com/profile/wow/character/'
-        self.base_url += f'{realm}/{name}'
+        self.base_url += f'{self.realm_slug}/{self.char_name}'
         self._tmp_dir = os.path.join(
             Path.home(),
             'Imminent',
-            name + '_' + realm)
+            self.char_name + '_' + self.realm_slug)
 
     def get_access_token(self):
         """
@@ -166,7 +169,7 @@ class Data():
         return missing_enchants_list
 
     def _get_reset_timestamp_list(self):
-        starting_timestamp = test_timestamp
+        starting_timestamp = bfa_timestamp
         reset_list = []
         today_weekday = datetime.today().weekday()
         days_from_reset = (today_weekday + 5) % 7
@@ -183,8 +186,33 @@ class Data():
                 last_wednesday_object)
         return reset_list
 
+    def get_mythic_plus_done_per_week(self):
+        """
+        Returns the number of mythic plus dungeons completed this reset.
+        Requires the mythic_plus.json file to have already be downloaded
+        """
+        reset_list = self._get_reset_timestamp_list()
+
+        mythic_plus_list = self._get_info('mythic_plus', ['best_runs'])
+        return len(mythic_plus_list)
+
+    def _get_list_of_all_mythic_plus_files(self):
+        dir = os.path.join(self._tmp_dir, 'mythic_plus')
+        file_list = []
+        filenames = os.listdir(dir)
+        for _ in filenames:
+            file_list.append(os.path.join(dir, _))
+        return file_list
+
+    def download_mythic_plus_data(self):
+        process = CrawlerProcess()
+        process.crawl(RioScrapingSpider, char_name=self.char_name,
+                      realm_slug=self.realm_slug, region=self.region)
+        process.start()
+
 
 if __name__ == "__main__":
+    # print(os.listdir(r'C:\Users\stefm\Imminent\kugarina_twisting-nether\mythic_plus'))
     kugar = Data('kugarina', 'twisting-nether')
-    kugar.download_data('equipment')
-    print(kugar._get_reset_timestamp_list())
+    # kugar.download_mythic_plus_data()
+    print(kugar._get_list_of_all_mythic_plus_files())
