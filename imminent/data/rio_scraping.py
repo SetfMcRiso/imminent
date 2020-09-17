@@ -28,13 +28,15 @@ class RioScrapingSpider(scrapy.Spider):
 
     name = 'rio_scraping'
 
-    def __init__(self, char_name, realm_slug, region, **kwargs):
+    def __init__(self, char_name, realm_slug, guild, region, **kwargs):
         self.char_name = char_name
         self.realm_slug = realm_slug
         self.region = region
+        self.guild = guild
         self.tmp_dir = os.path.join(
             Path.home(),
-            'Imminent',
+            'Kugar\'s Guild Management Tool',
+            self.guild,
             char_name + '_' + realm_slug,
             'mythic_plus')
         self.start_urls = [

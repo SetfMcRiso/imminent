@@ -26,16 +26,19 @@ class Data():
     Class that is handling the data acquisition.
     """
 
-    def __init__(self, char_name=None, realm_slug=None, region='eu'):
+    def __init__(self, char_name, realm_slug, guild, region='eu'):
         self.char_name = char_name
         self.realm_slug = realm_slug
         self.region = region
+        self.guild = guild
         self.base_url = 'https://eu.api.blizzard.com/profile/wow/character/'
         self.base_url += f'{self.realm_slug}/{self.char_name}'
         self._tmp_dir = os.path.join(
             Path.home(),
-            'Imminent',
+            'Kugar\'s Guild Management Tool',
+            self.guild,
             self.char_name + '_' + self.realm_slug)
+        self._mythic_plus_count_list = []
 
     def get_access_token(self):
         """
@@ -192,27 +195,90 @@ class Data():
         Requires the mythic_plus.json file to have already be downloaded
         """
         reset_list = self._get_reset_timestamp_list()
+        mythic_plus_file_list = self._get_list_of_all_mythic_plus_files()
+        self._mythic_plus_count_list = [0]*len(reset_list)
+        for file in mythic_plus_file_list:
+            self._update_mythic_plus_count_list(reset_list, file)
+        return self._mythic_plus_count_list
 
-        mythic_plus_list = self._get_info('mythic_plus', ['best_runs'])
-        return len(mythic_plus_list)
+    def _update_mythic_plus_count_list(self, reset_list, filename):
+        file = JSON(filename)
+        file.load_setting()
+        for _ in file.values['runs']:
+            run_completion_time = datetime.strptime(
+                _['summary']['completed_at'][:-5:],
+                '%Y-%m-%dT%H:%M:%S').replace(
+                tzinfo=pytz.UTC)
+            run_completion_timestamp = datetime.timestamp(run_completion_time)
+            counter = self._get_mythic_plus_week_from_timestamp(
+                reset_list, run_completion_timestamp)
+            if counter is not False:
+                self._mythic_plus_count_list[counter] += 1
+
+    def _get_mythic_plus_week_from_timestamp(
+            self, reset_list, run_completion_timestamp):
+        if run_completion_timestamp < reset_list[-1]:
+            return False
+        for _ in range(0, len(reset_list)):
+            if reset_list[_] < run_completion_timestamp:
+                return _
+
+    def get_mythic_rewards_this_reset(self):
+        """
+        Returns a list with the mythic plus items for the current reset
+        """
+        return self._get_mythic_rewards(0)
+
+    def _get_mythic_rewards(self, reset):
+        reset_list = self._get_reset_timestamp_list()
+        mythic_plus_file_list = self._get_list_of_all_mythic_plus_files()
+        completed_keys_list = []
+        rewards_list = [0]*3
+        for _ in mythic_plus_file_list:
+            completed_keys_list += self._get_list_of_mythic_plus_per_dungeon(
+                _, reset_list, reset)
+        completed_keys_list.sort(reverse=True)
+        if len(completed_keys_list) != 0:
+            rewards_list[0] = completed_keys_list[0]
+        if len(completed_keys_list) >= 4:
+            rewards_list[1] = completed_keys_list[3]
+        if len(completed_keys_list) >= 10:
+            rewards_list[2] = completed_keys_list[9]
+        return rewards_list
+
+    def _get_list_of_mythic_plus_per_dungeon(
+            self, filename, reset_list, reset):
+        file = JSON(filename)
+        file.load_setting()
+        completed_keys_list = []
+        for _ in file.values['runs']:
+            run_completion_time = datetime.strptime(
+                _['summary']['completed_at'][:-5:],
+                '%Y-%m-%dT%H:%M:%S').replace(
+                tzinfo=pytz.UTC)
+            run_completion_timestamp = datetime.timestamp(run_completion_time)
+            if run_completion_timestamp > reset_list[reset]:
+                completed_keys_list.append(_['summary']['mythic_level'])
+        return completed_keys_list
 
     def _get_list_of_all_mythic_plus_files(self):
-        dir = os.path.join(self._tmp_dir, 'mythic_plus')
+        directory = os.path.join(self._tmp_dir, 'mythic_plus')
         file_list = []
-        filenames = os.listdir(dir)
+        filenames = os.listdir(directory)
         for _ in filenames:
-            file_list.append(os.path.join(dir, _))
+            file_list.append(os.path.join(directory, _))
         return file_list
 
     def download_mythic_plus_data(self):
         process = CrawlerProcess()
         process.crawl(RioScrapingSpider, char_name=self.char_name,
-                      realm_slug=self.realm_slug, region=self.region)
+                      realm_slug=self.realm_slug, guild=self.guild,
+                      region=self.region)
         process.start()
 
 
 if __name__ == "__main__":
     # print(os.listdir(r'C:\Users\stefm\Imminent\kugarina_twisting-nether\mythic_plus'))
-    kugar = Data('kugarina', 'twisting-nether')
-    # kugar.download_mythic_plus_data()
-    print(kugar._get_list_of_all_mythic_plus_files())
+    kugar = Data('Curvajal', 'twisting-nether', 'Imminent 2')
+    kugar.download_mythic_plus_data()
+    print(kugar._get_mythic_rewards(0))
