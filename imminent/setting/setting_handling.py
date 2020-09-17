@@ -27,7 +27,7 @@ class JSON():
 
     def _load_values(self):
         try:
-            with open(self.filepath) as json_file:
+            with open(self.filepath, encoding='utf-8') as json_file:
                 values = json.load(json_file)
         except Exception as ex:
             raise ex

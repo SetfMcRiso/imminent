@@ -1,11 +1,18 @@
 import os
 from pathlib import Path
 from PyQt5 import QtCore, QtGui, QtWidgets
+from imminent.setting.setting_handling import JSON
+from imminent.utilities.file_handling import FileHandler
+from imminent.user_interface.pop_up import PopUpWindow
 
 
 class Ui_MainWindow(object):
 
     def __init__(self, MainWindow):
+        self.tmp_dir = os.path.join(
+            Path.home(),
+            'Kugar\'s Guild Management Tool')
+        FileHandler().make_directory(self.tmp_dir)
         self.main_window = MainWindow
         self._init_main_window()
         self._init_widgets()
@@ -77,10 +84,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.guild_comboBox, 0, 1, 1, 1)
 
     def _get_list_of_guilds(self):
-        tmp_dir = os.path.join(
-            Path.home(),
-            'Kugar\'s Guild Management Tool')
-        return os.listdir(tmp_dir)
+        return os.listdir(self.tmp_dir)
 
     def _create_add_guild_button(self):
         self.add_guild_button = QtWidgets.QPushButton(self.centralwidget)
@@ -102,6 +106,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         self.add_guild_button.setText(
             _translate("MainWindow", "Add Guild"))
+        self.add_guild_button.clicked.connect(self._add_guild_button_action)
 
     def _create_separator_line(self):
         self.line = QtWidgets.QFrame(self.centralwidget)
@@ -225,32 +230,73 @@ class Ui_MainWindow(object):
         self.scrollArea_gridLayout.setObjectName("scrollArea_gridLayout")
 
     def _create_character_checkboxes(self):
+        self.checkbox_list = []
         _translate = QtCore.QCoreApplication.translate
-        for _ in range(25):
-            setattr(self, 'char_checkbox' + str(_),
+        guild = str(self.guild_comboBox.currentText())
+        roster_path = os.path.join(
+            self.tmp_dir, guild, 'roster', 'roster.json')
+        if not os.path.isfile(roster_path):
+            self._create_template_roster_file(guild)
+        roster = JSON(roster_path)
+        roster.load_setting()
+        vertical_position_counter = 0
+        for _ in roster.values['roster']:
+            charname = _.split('/')[7].capitalize()
+            setattr(self, 'char_checkbox' + charname,
                     QtWidgets.QCheckBox(self.scrollAreaWidgetContents_3))
             sizePolicy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
             sizePolicy.setHeightForWidth(
-                getattr(self, 'char_checkbox' + str(_)).sizePolicy(
+                getattr(self, 'char_checkbox' + charname).sizePolicy(
                 ).hasHeightForWidth())
-            getattr(self, 'char_checkbox' + str(_)).setSizePolicy(sizePolicy)
             getattr(self, 'char_checkbox' +
-                    str(_)).setObjectName('char_checkbox' + str(_))
+                    charname).setSizePolicy(sizePolicy)
+            getattr(self, 'char_checkbox' +
+                    charname).setObjectName('char_checkbox'
+                                            + charname)
             self.scrollArea_gridLayout.addWidget(
-                getattr(self, 'char_checkbox' + str(_)), _, 0, 1, 1)
+                getattr(self, 'char_checkbox' + charname),
+                vertical_position_counter, 0, 1, 1)
             getattr(self, 'char_checkbox' +
-                    str(_)).setText(_translate("MainWindow", str(_)))
+                    charname).setText(_translate("MainWindow",
+                                                 charname))
+            vertical_position_counter += 1
         self.scrollArea.setWidget(self.scrollAreaWidgetContents_3)
         self.gridLayout.addWidget(self.scrollArea, 3, 0, 1, 4)
         self.main_window.setCentralWidget(self.centralwidget)
+        self.guild_comboBox.currentTextChanged.connect(
+            self._refresh_scrollArea_gridLayout)
+
+    def _refresh_scrollArea_gridLayout(self):
+        if hasattr(self, 'scrollArea_gridLayout'):
+            for i in reversed(range(self.scrollArea_gridLayout.count())):
+                self.scrollArea_gridLayout.itemAt(i).widget().setParent(None)
+        self._create_character_checkboxes()
 
     def _create_status_bar(self):
         self.statusbar = QtWidgets.QStatusBar(self.main_window)
         self.statusbar.setObjectName("statusbar")
         self.main_window.setStatusBar(self.statusbar)
+
+    def _create_template_roster_file(self, guild):
+        roster_dir = os.path.join(
+            self.tmp_dir, guild, 'roster')
+        roster_path = os.path.join(roster_dir, 'roster.json')
+        FileHandler().make_directory(roster_dir)
+        roster = JSON(roster_path)
+        roster.values = {'roster': []}
+        roster.save_setting()
+
+    def _add_new_guild(self, guild):
+        guild_dir = os.path.join(self.tmp_dir, guild)
+        if not os.path.isdir(guild_dir):
+            FileHandler().make_directory(guild_dir)
+            self._create_template_roster_file(guild)
+
+    def _add_guild_button_action(self):
+        pop_up = PopUpWindow('guild', self)
 
 
 if __name__ == "__main__":
