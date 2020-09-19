@@ -1,11 +1,18 @@
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
+import os
+from pathlib import Path
 from datetime import datetime
+from scrapy.crawler import CrawlerProcess
+from imminent.data.data_acquisition import Data
+from imminent.setting.setting_handling import JSON
+from imminent.data.rio_scraping import RioScrapingSpider
 
 
 class GSheetsHandler():
 
-    def __init__(self, json_keyfile, sheet_name):
+    def __init__(self, json_keyfile, sheet_name, guild):
+        self.guild = guild
         self.scope = ["https://spreadsheets.google.com/feeds",
                       "https://www.googleapis.com/auth/spreadsheets",
                       "https://www.googleapis.com/auth/drive.file",
@@ -39,7 +46,6 @@ class GSheetsHandler():
                 }
             ]
         }
-        print(self.worksheet1.col_count)
         if self.worksheet1.col_count < 30:
             self.sheet.batch_update(body)
 
@@ -919,10 +925,66 @@ class GSheetsHandler():
         }
         return self.sheet.batch_update(body)
 
+    def update_char_info(self):
+        char_list = self._get_char_list()
+#        self._run_spider(char_list)
+#        self._download_data(char_list)
+        self._update_spreadsheet(char_list)
+
+    def _update_spreadsheet(self, char_list):
+        row = 3
+        for _ in char_list:
+            self.worksheet1.update_cell(row, 1, _[0].capitalize())
+            row += 1
+
+    def _run_spider(self, char_list):
+        process = CrawlerProcess()
+        process.crawl(RioScrapingSpider, char_list, self.guild)
+        process.start()
+
+    def _download_data(self, char_list):
+        for char in char_list:
+            data = Data(char[0], char[1], self.guild, char[2])
+            data.download_data()
+
+    def _get_char_list(self):
+        char_list = []
+        roster_path = os.path.join(
+            Path.home(),
+            'Kugar\'s Guild Management Tool',
+            self.guild,
+            'roster',
+            'roster.json')
+        roster = JSON(roster_path)
+        roster.load_setting()
+        for _ in roster.values['roster']:
+            charname = _.split('/')[7]
+            realm_slug = _.split('/')[6]
+            region = _.split('/')[5]
+            char_list.append((charname, realm_slug, region))
+        return char_list
+
+    def generate_report(self):
+        self.merge_refreshed_cells()
+        self.merge_itel_level_cells()
+        self.merge_enchant_cells()
+        self.merge_reputation_cells()
+        self.merge_mythic_plus_cells()
+        self.merge_weekly_rewards_cells()
+        self.merge_profession_cells()
+        self.add_background_color_first_row()
+        self.add_background_color_second_row()
+        self.add_first_row_text()
+        self.add_second_row_text()
+        self.update_dimensions()
+        self.add_borders()
+        self.update_char_info()
+
 
 if __name__ == "__main__":
     mitsos = GSheetsHandler(
-        r'C:\Users\stefm\Downloads\Imminent-b057faf0e02a.json', 'Imminent')
+        r'C:\Users\stefm\Downloads\Imminent-b057faf0e02a.json',
+        'Imminent', 'Imminent')
     mitsos.merge_refreshed_cells()
     mitsos.merge_itel_level_cells()
     mitsos.merge_enchant_cells()
@@ -936,3 +998,4 @@ if __name__ == "__main__":
     mitsos.add_second_row_text()
     mitsos.update_dimensions()
     mitsos.add_borders()
+    mitsos.update_char_info()

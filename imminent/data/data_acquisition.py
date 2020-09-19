@@ -276,16 +276,9 @@ class Data():
             file_list.append(os.path.join(directory, _))
         return file_list
 
-    def download_mythic_plus_data(self):
-        process = CrawlerProcess()
-        process.crawl(RioScrapingSpider, char_name=self.char_name,
-                      realm_slug=self.realm_slug, guild=self.guild,
-                      region=self.region)
-        process.start()
-
 
 if __name__ == "__main__":
     # print(os.listdir(r'C:\Users\stefm\Imminent\kugarina_twisting-nether\mythic_plus'))
-    kugar = Data('kugaroula', 'twisting-nether', 'Imminent')
+    kugar = Data('elayna', 'twisting-nether', 'Imminent')
     kugar.download_data()
     # print(kugar._get_mythic_rewards(0))

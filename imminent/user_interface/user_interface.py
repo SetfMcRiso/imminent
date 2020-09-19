@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from imminent.setting.setting_handling import JSON
 from imminent.utilities.file_handling import FileHandler
 from imminent.user_interface.pop_up import PopUpWindow
+from imminent.g_sheets_handling.g_sheets_handling import GSheetsHandler
 
 
 class Ui_MainWindow(object):
@@ -198,6 +199,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         self.generate_report_button.setText(
             _translate("MainWindow", "Generate Report"))
+        self.generate_report_button.clicked.connect(
+            self._generate_report_button_action)
 
     def _create_cancel_button(self):
         self.cancel_button = QtWidgets.QPushButton(self.centralwidget)
@@ -347,6 +350,13 @@ class Ui_MainWindow(object):
                     break
         roster.save_setting()
         return True
+
+    def _generate_report_button_action(self):
+        guild = str(self.guild_comboBox.currentText())
+        mitsos = GSheetsHandler(
+            r'C:\Users\stefm\Downloads\Imminent-b057faf0e02a.json',
+            guild, guild)
+        mitsos.generate_report()
 
 
 if __name__ == "__main__":
