@@ -86,11 +86,18 @@ class Data():
             return self.base_url + url_part
         return None
 
-    def download_data(self, category):
+    def download_data(self, category=None):
         """
         Downloads the data requested in the C://Users/currentuser/Imminent
         The folder Imminent and the individual character folders are created
         """
+        if category is None:
+            url_path = ResourceHandler().get_resource('urls.json')
+            url = JSON(url_path)
+            url.load_setting()
+            for _ in url.values.keys():
+                self.download_data(_)
+            return
         FileHandler().make_directory(self._tmp_dir)
         path = os.path.join(self._tmp_dir, category + '.json')
         file = JSON(path)
@@ -279,6 +286,6 @@ class Data():
 
 if __name__ == "__main__":
     # print(os.listdir(r'C:\Users\stefm\Imminent\kugarina_twisting-nether\mythic_plus'))
-    kugar = Data('Curvajal', 'twisting-nether', 'Imminent 2')
-    kugar.download_mythic_plus_data()
-    print(kugar._get_mythic_rewards(0))
+    kugar = Data('kugaroula', 'twisting-nether', 'Imminent')
+    kugar.download_data()
+    # print(kugar._get_mythic_rewards(0))

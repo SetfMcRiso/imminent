@@ -63,10 +63,15 @@ class PopUpWindow(QtWidgets.QDialog):
         self.gridLayout.addItem(spacerItem2, 1, 0, 1, 1)
 
     def _add_button_clicked(self):
-        guild = self.lineEdit.text()
-        self.parent._add_new_guild(guild)
-        self.parent._create_template_roster_file(guild)
-        self.accept()
+        if self.window_type == 'guild':
+            guild = self.lineEdit.text()
+            self.parent._add_new_guild(guild)
+            self.parent._create_template_roster_file(guild)
+            self.accept()
+        else:
+            armory_link = self.lineEdit.text()
+            self.parent._add_new_character(armory_link)
+            self.lineEdit.setText('')
 
     def _cancel_button_clicked(self):
         self.reject()
@@ -75,8 +80,15 @@ class PopUpWindow(QtWidgets.QDialog):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate(
             "self", "Add " + self.window_type + " window"))
-        self.label.setText(_translate(
-            "Form",
-            "Please insert the name of the guild that you would like to create"))
-        self.add_button.setText(_translate("self", "Add Guild"))
+        if self.window_type == 'guild':
+            self.label.setText(_translate(
+                "self",
+                "Please insert the name of the guild " +
+                "that you would like to create"))
+            self.add_button.setText(_translate("self", "Add Guild"))
+        else:
+            self.label.setText(_translate(
+                "self",
+                "Please insert the armory link of the character :"))
+            self.add_button.setText(_translate("self", "Add Character"))
         self.cancel_button.setText(_translate("self", "Cancel"))

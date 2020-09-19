@@ -163,6 +163,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         self.add_character_button.setText(
             _translate("MainWindow", "Add Character"))
+        self.add_character_button.clicked.connect(
+            self._add_character_button_action)
 
     def _create_delete_characters_button(self):
         self.delete_characters_button = QtWidgets.QPushButton(
@@ -179,6 +181,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         self.delete_characters_button.setText(_translate(
             "MainWindow", "Delete Characters"))
+        self.delete_characters_button.clicked.connect(
+            self._delete_button_action)
 
     def _create_generate_report_button(self):
         self.generate_report_button = QtWidgets.QPushButton(self.centralwidget)
@@ -208,6 +212,8 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.cancel_button, 4, 3, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.cancel_button.setText(_translate("MainWindow", "Cancel"))
+        self.cancel_button.clicked.connect(
+            self._cancel_button_action)
 
     def _create_scrolled_area(self):
         self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
@@ -259,6 +265,8 @@ class Ui_MainWindow(object):
             self.scrollArea_gridLayout.addWidget(
                 getattr(self, 'char_checkbox' + charname),
                 vertical_position_counter, 0, 1, 1)
+            self.checkbox_list.append(
+                getattr(self, 'char_checkbox' + charname))
             getattr(self, 'char_checkbox' +
                     charname).setText(_translate("MainWindow",
                                                  charname))
@@ -296,7 +304,49 @@ class Ui_MainWindow(object):
             self._create_template_roster_file(guild)
 
     def _add_guild_button_action(self):
-        pop_up = PopUpWindow('guild', self)
+        PopUpWindow('guild', self)
+        self._create_guild_combobox()
+
+    def _add_character_button_action(self):
+        PopUpWindow('character', self)
+        self._refresh_scrollArea_gridLayout()
+
+    def _add_new_character(self, armory_link):
+        guild = str(self.guild_comboBox.currentText())
+        roster_path = os.path.join(
+            self.tmp_dir, guild, 'roster', 'roster.json')
+        if not os.path.isfile(roster_path):
+            self._create_template_roster_file(guild)
+        roster = JSON(roster_path)
+        roster.load_setting()
+        roster.values['roster'].append(armory_link)
+        roster.save_setting()
+
+    def _cancel_button_action(self):
+        self.main_window.close()
+
+    def _delete_button_action(self):
+        delete_list = []
+        for _ in self.checkbox_list:
+            if _.isChecked():
+                delete_list.append(_.text())
+        self._delete_roster_entries(delete_list)
+        self._refresh_scrollArea_gridLayout()
+
+    def _delete_roster_entries(self, delete_list):
+        guild = str(self.guild_comboBox.currentText())
+        roster_path = os.path.join(
+            self.tmp_dir, guild, 'roster', 'roster.json')
+        roster = JSON(roster_path)
+        roster.load_setting()
+        for _ in delete_list:
+            for link in roster.values['roster']:
+                if _.lower() in link:
+                    index = roster.values['roster'].index(link)
+                    roster.values['roster'].pop(index)
+                    break
+        roster.save_setting()
+        return True
 
 
 if __name__ == "__main__":
