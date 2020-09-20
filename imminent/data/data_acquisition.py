@@ -73,6 +73,8 @@ class Data():
 
     def _request_data(self, url):
         headers = self._get_header()
+        print(headers)
+        print(url)
         response = requests.get(url=url, headers=headers)
         return response
 

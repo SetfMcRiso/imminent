@@ -927,8 +927,11 @@ class GSheetsHandler():
 
     def update_char_info(self):
         char_list = self._get_char_list()
-#        self._run_spider(char_list)
-#        self._download_data(char_list)
+        self._run_spider(char_list)
+
+    def download_data(self):
+        char_list = self._get_char_list()
+        self._download_data(char_list)
         self._update_spreadsheet(char_list)
 
     def _update_spreadsheet(self, char_list):
@@ -965,6 +968,7 @@ class GSheetsHandler():
         return char_list
 
     def generate_report(self):
+        self.download_data()
         self.merge_refreshed_cells()
         self.merge_itel_level_cells()
         self.merge_enchant_cells()

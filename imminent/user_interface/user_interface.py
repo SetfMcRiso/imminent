@@ -14,13 +14,20 @@ class Ui_MainWindow(object):
             Path.home(),
             'Kugar\'s Guild Management Tool')
         FileHandler().make_directory(self.tmp_dir)
+        saved_variables_dir = os.path.join(self.tmp_dir, 'Saved variables')
+        self.saved_variables_path = os.path.join(
+            saved_variables_dir, 'saved_variables.json')
+        if not os.path.isdir(saved_variables_dir):
+            FileHandler().make_directory(saved_variables_dir)
+        if not os.path.isfile(self.saved_variables_path):
+            self._create_saved_variables_template()
         self.main_window = MainWindow
         self._init_main_window()
         self._init_widgets()
 
     def _init_main_window(self):
         self.main_window.setObjectName("MainWindow")
-        self.main_window.resize(697, 298)
+        self.main_window.resize(500, 350)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -34,6 +41,11 @@ class Ui_MainWindow(object):
 
     def _init_widgets(self):
         self._create_central_grid()
+        self._create_spreadsheet_label()
+        self._create_spreadsheet_line_edit()
+        self._create_credentials_label()
+        self._create_credentials_line_edit()
+        self._create_select_file_button()
         self._create_select_guild_label()
         self._create_guild_combobox()
         self._create_add_guild_button()
@@ -54,10 +66,100 @@ class Ui_MainWindow(object):
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
 
+    def _create_spreadsheet_line_edit(self):
+        self.spreadsheet_line_edit = QtWidgets.QLineEdit(self.centralwidget)
+        self.spreadsheet_line_edit.setObjectName("spreadsheet_line_edit")
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.spreadsheet_line_edit.sizePolicy().hasHeightForWidth())
+        self.spreadsheet_line_edit.setSizePolicy(sizePolicy)
+        self.gridLayout.addWidget(self.spreadsheet_line_edit, 0, 1, 1, 1)
+        self.spreadsheet_line_edit.setText(self._get_saved_spreadsheet_name())
+
+    def _create_spreadsheet_label(self):
+        self.spreadsheet_label = QtWidgets.QLabel(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.spreadsheet_label.sizePolicy().hasHeightForWidth())
+        self.spreadsheet_label.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Semibold")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.spreadsheet_label.setFont(font)
+        self.spreadsheet_label.setObjectName("spreadsheet_label")
+        self.gridLayout.addWidget(self.spreadsheet_label, 0, 0, 1, 1)
+        _translate = QtCore.QCoreApplication.translate
+        self.spreadsheet_label.setText(
+            _translate("MainWindow", "Gsheet name :"))
+
+    def _create_credentials_label(self):
+        self.credentials_label = QtWidgets.QLabel(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.credentials_label.sizePolicy().hasHeightForWidth())
+        self.credentials_label.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Semibold")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.credentials_label.setFont(font)
+        self.credentials_label.setObjectName("credentials_label")
+        self.gridLayout.addWidget(self.credentials_label, 1, 0, 1, 1)
+        _translate = QtCore.QCoreApplication.translate
+        self.credentials_label.setText(
+            _translate("MainWindow", "Credentials :"))
+
+    def _create_credentials_line_edit(self):
+        self.credentials_line_edit = QtWidgets.QLineEdit(self.centralwidget)
+        self.credentials_line_edit.setObjectName("credentials_line_edit")
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.credentials_line_edit.sizePolicy().hasHeightForWidth())
+        self.credentials_line_edit.setSizePolicy(sizePolicy)
+        self.gridLayout.addWidget(self.credentials_line_edit, 1, 1, 1, 1)
+        self.credentials_line_edit.setText(self._get_saved_credentials_file())
+
+    def _create_select_file_button(self):
+        self.select_file_button = QtWidgets.QPushButton(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.select_file_button.sizePolicy().hasHeightForWidth())
+        self.select_file_button.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setFamily("Yu Gothic UI Semibold")
+        font.setPointSize(9)
+        font.setBold(True)
+        font.setWeight(75)
+        self.select_file_button.setFont(font)
+        self.select_file_button.setObjectName("select_file_button")
+        self.gridLayout.addWidget(self.select_file_button, 1, 2, 1, 1)
+        _translate = QtCore.QCoreApplication.translate
+        self.select_file_button.setText(
+            _translate("MainWindow", "Select File"))
+        self.select_file_button.clicked.connect(self.select_file)
+
     def _create_select_guild_label(self):
         self.select_guild_label = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
@@ -70,7 +172,7 @@ class Ui_MainWindow(object):
         font.setWeight(75)
         self.select_guild_label.setFont(font)
         self.select_guild_label.setObjectName("select_guild_label")
-        self.gridLayout.addWidget(self.select_guild_label, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.select_guild_label, 2, 0, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.select_guild_label.setText(
             _translate("MainWindow", "Select Guild :"))
@@ -82,15 +184,19 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         lista = self._get_list_of_guilds()
         self.guild_comboBox.addItems(lista)
-        self.gridLayout.addWidget(self.guild_comboBox, 0, 1, 1, 1)
+        self.gridLayout.addWidget(self.guild_comboBox, 2, 1, 1, 1)
 
     def _get_list_of_guilds(self):
-        return os.listdir(self.tmp_dir)
+        guild_list = os.listdir(self.tmp_dir)
+        if 'Saved variables' in guild_list:
+            index = guild_list.index('Saved variables')
+            guild_list.pop(index)
+        return guild_list
 
     def _create_add_guild_button(self):
         self.add_guild_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
@@ -103,7 +209,7 @@ class Ui_MainWindow(object):
         font.setWeight(75)
         self.add_guild_button.setFont(font)
         self.add_guild_button.setObjectName("add_guild_button")
-        self.gridLayout.addWidget(self.add_guild_button, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.add_guild_button, 2, 2, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.add_guild_button.setText(
             _translate("MainWindow", "Add Guild"))
@@ -127,7 +233,7 @@ class Ui_MainWindow(object):
         self.line.setFrameShape(QtWidgets.QFrame.HLine)
         self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line.setObjectName("line")
-        self.gridLayout.addWidget(self.line, 1, 0, 1, 4)
+        self.gridLayout.addWidget(self.line, 3, 0, 1, 4)
 
     def _create_character_list_label(self):
         self.character_list_label = QtWidgets.QLabel(self.centralwidget)
@@ -145,7 +251,7 @@ class Ui_MainWindow(object):
         font.setWeight(75)
         self.character_list_label.setFont(font)
         self.character_list_label.setObjectName("character_list_label")
-        self.gridLayout.addWidget(self.character_list_label, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.character_list_label, 4, 0, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.character_list_label.setText(
             _translate("MainWindow", "Character List:"))
@@ -160,7 +266,7 @@ class Ui_MainWindow(object):
             self.add_character_button.sizePolicy().hasHeightForWidth())
         self.add_character_button.setSizePolicy(sizePolicy)
         self.add_character_button.setObjectName("add_character_button")
-        self.gridLayout.addWidget(self.add_character_button, 4, 0, 1, 1)
+        self.gridLayout.addWidget(self.add_character_button, 6, 0, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.add_character_button.setText(
             _translate("MainWindow", "Add Character"))
@@ -178,7 +284,7 @@ class Ui_MainWindow(object):
             self.delete_characters_button.sizePolicy().hasHeightForWidth())
         self.delete_characters_button.setSizePolicy(sizePolicy)
         self.delete_characters_button.setObjectName("delete_characters_button")
-        self.gridLayout.addWidget(self.delete_characters_button, 4, 1, 1, 1)
+        self.gridLayout.addWidget(self.delete_characters_button, 6, 1, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.delete_characters_button.setText(_translate(
             "MainWindow", "Delete Characters"))
@@ -188,14 +294,14 @@ class Ui_MainWindow(object):
     def _create_generate_report_button(self):
         self.generate_report_button = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(
             self.generate_report_button.sizePolicy().hasHeightForWidth())
         self.generate_report_button.setSizePolicy(sizePolicy)
         self.generate_report_button.setObjectName("generate_report_button")
-        self.gridLayout.addWidget(self.generate_report_button, 4, 2, 1, 1)
+        self.gridLayout.addWidget(self.generate_report_button, 6, 2, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.generate_report_button.setText(
             _translate("MainWindow", "Generate Report"))
@@ -212,7 +318,7 @@ class Ui_MainWindow(object):
             self.cancel_button.sizePolicy().hasHeightForWidth())
         self.cancel_button.setSizePolicy(sizePolicy)
         self.cancel_button.setObjectName("cancel_button")
-        self.gridLayout.addWidget(self.cancel_button, 4, 3, 1, 1)
+        self.gridLayout.addWidget(self.cancel_button, 6, 3, 1, 1)
         _translate = QtCore.QCoreApplication.translate
         self.cancel_button.setText(_translate("MainWindow", "Cancel"))
         self.cancel_button.clicked.connect(
@@ -244,12 +350,13 @@ class Ui_MainWindow(object):
         guild = str(self.guild_comboBox.currentText())
         roster_path = os.path.join(
             self.tmp_dir, guild, 'roster', 'roster.json')
-        if not os.path.isfile(roster_path):
-            self._create_template_roster_file(guild)
-        roster = JSON(roster_path)
-        roster.load_setting()
+        roster_list = []
+        if os.path.isfile(roster_path):
+            roster = JSON(roster_path)
+            roster.load_setting()
+            roster_list = roster.values['roster']
         vertical_position_counter = 0
-        for _ in roster.values['roster']:
+        for _ in roster_list:
             charname = _.split('/')[7].capitalize()
             setattr(self, 'char_checkbox' + charname,
                     QtWidgets.QCheckBox(self.scrollAreaWidgetContents_3))
@@ -275,7 +382,7 @@ class Ui_MainWindow(object):
                                                  charname))
             vertical_position_counter += 1
         self.scrollArea.setWidget(self.scrollAreaWidgetContents_3)
-        self.gridLayout.addWidget(self.scrollArea, 3, 0, 1, 4)
+        self.gridLayout.addWidget(self.scrollArea, 5, 0, 1, 4)
         self.main_window.setCentralWidget(self.centralwidget)
         self.guild_comboBox.currentTextChanged.connect(
             self._refresh_scrollArea_gridLayout)
@@ -299,6 +406,14 @@ class Ui_MainWindow(object):
         roster = JSON(roster_path)
         roster.values = {'roster': []}
         roster.save_setting()
+
+    def select_file(self):
+        home_dir = str(Path.home())
+        fname = QtWidgets.QFileDialog.getOpenFileName(self.main_window,
+                                                      'Open file',
+                                                      home_dir,
+                                                      "JSON files (*.json)")[0]
+        self.credentials_line_edit.setText(fname)
 
     def _add_new_guild(self, guild):
         guild_dir = os.path.join(self.tmp_dir, guild)
@@ -352,11 +467,37 @@ class Ui_MainWindow(object):
         return True
 
     def _generate_report_button_action(self):
+        self._update_saved_variables()
         guild = str(self.guild_comboBox.currentText())
-        mitsos = GSheetsHandler(
-            r'C:\Users\stefm\Downloads\Imminent-b057faf0e02a.json',
-            guild, guild)
+        mitsos = GSheetsHandler(str(self.credentials_line_edit.text()),
+                                str(self.spreadsheet_line_edit.text()), guild)
         mitsos.generate_report()
+
+    def _update_saved_variables(self):
+        spreadsheet = str(self.spreadsheet_line_edit.text())
+        credentials = str(self.credentials_line_edit.text())
+        saved_variables = JSON(self.saved_variables_path)
+        saved_variables.load_setting()
+        saved_variables.values['spreadsheet'] = spreadsheet
+        saved_variables.values['credentials'] = credentials
+        saved_variables.save_setting()
+
+    def _create_saved_variables_template(self):
+        saved_variables = JSON(self.saved_variables_path)
+        saved_variables.load_setting()
+        saved_variables.values = {'spreadsheet': '',
+                                  'credentials': ''}
+        saved_variables.save_setting()
+
+    def _get_saved_credentials_file(self):
+        saved_variables = JSON(self.saved_variables_path)
+        saved_variables.load_setting()
+        return saved_variables.get_value(['credentials'])
+
+    def _get_saved_spreadsheet_name(self):
+        saved_variables = JSON(self.saved_variables_path)
+        saved_variables.load_setting()
+        return saved_variables.get_value(['spreadsheet'])
 
 
 if __name__ == "__main__":
