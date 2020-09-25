@@ -1,15 +1,24 @@
 import os
+import ctypes
+import threading
+import logging
+import qt5reactor
 from pathlib import Path
 from PyQt5 import QtCore, QtGui, QtWidgets
+from threading import Thread
 from imminent.setting.setting_handling import JSON
 from imminent.utilities.file_handling import FileHandler
 from imminent.user_interface.pop_up import PopUpWindow
 from imminent.g_sheets_handling.g_sheets_handling import GSheetsHandler
 
+_LOGGER = logging.getLogger('imminent.user_interface')
+
 
 class Ui_MainWindow(object):
 
     def __init__(self, MainWindow):
+        id = QtCore.QMetaType.type('QTextBlock')
+        id = QtCore.QMetaType.type('QTextCursor')
         self.tmp_dir = os.path.join(
             Path.home(),
             'Kugar\'s Guild Management Tool')
@@ -27,7 +36,7 @@ class Ui_MainWindow(object):
 
     def _init_main_window(self):
         self.main_window.setObjectName("MainWindow")
-        self.main_window.resize(500, 350)
+        self.main_window.resize(700, 650)
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -56,8 +65,10 @@ class Ui_MainWindow(object):
         self._create_generate_report_button()
         self._create_cancel_button()
         self._create_scrolled_area()
+        # self._create_log_window()
         self._create_character_checkboxes()
         self._create_status_bar()
+        _LOGGER.info('GUI started successfully')
         QtCore.QMetaObject.connectSlotsByName(self.main_window)
 
     def _create_central_grid(self):
@@ -387,6 +398,13 @@ class Ui_MainWindow(object):
         self.guild_comboBox.currentTextChanged.connect(
             self._refresh_scrollArea_gridLayout)
 
+    def _create_log_window(self):
+        self.logTextBox = QTextEditLogger(self)
+        self.logTextBox.setFormatter(logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s'))
+        logging.getLogger().addHandler(self.logTextBox)
+        logging.getLogger().setLevel(logging.INFO)
+
     def _refresh_scrollArea_gridLayout(self):
         if hasattr(self, 'scrollArea_gridLayout'):
             for i in reversed(range(self.scrollArea_gridLayout.count())):
@@ -442,6 +460,18 @@ class Ui_MainWindow(object):
 
     def _cancel_button_action(self):
         self.main_window.close()
+        thread_id = self.get_id(self.thread)
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            thread_id,
+            ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print('Exception raise failure')
+
+    def get_id(self, _thread):
+        for id, thread in threading._active.items():
+            if thread is _thread:
+                return id
 
     def _delete_button_action(self):
         delete_list = []
@@ -467,11 +497,26 @@ class Ui_MainWindow(object):
         return True
 
     def _generate_report_button_action(self):
+        self.generate_report_button.setEnabled(False)
+        self.add_character_button.setEnabled(False)
+        self.delete_characters_button.setEnabled(False)
         self._update_saved_variables()
         guild = str(self.guild_comboBox.currentText())
+        self.thread = GenerateReportThread(
+            self,
+            self.credentials_line_edit.text(),
+            self.spreadsheet_line_edit.text(),
+            guild
+        )
+        self.thread.start()
+
+    def _generate_report(self, guild):
         mitsos = GSheetsHandler(str(self.credentials_line_edit.text()),
                                 str(self.spreadsheet_line_edit.text()), guild)
         mitsos.generate_report()
+        self.generate_report_button.setEnabled(True)
+        self.add_character_button.setEnabled(True)
+        self.delete_characters_button.setEnabled(True)
 
     def _update_saved_variables(self):
         spreadsheet = str(self.spreadsheet_line_edit.text())
@@ -499,9 +544,55 @@ class Ui_MainWindow(object):
         saved_variables.load_setting()
         return saved_variables.get_value(['spreadsheet'])
 
+    def _log_message(self, category, message):
+        getattr(_LOGGER, category)(message)
+        # _LOGGER.debug(message)
+
+
+class GenerateReportThread(QtCore.QThread):
+
+    def __init__(self, parent, credentials, spreadsheet, guild):
+        self.parent = parent
+        self.credentials = credentials
+        self.spreadsheet = spreadsheet
+        self.guild = guild
+        super().__init__()
+
+    def run(self):
+        mitsos = GSheetsHandler(self,
+                                str(self.credentials),
+                                str(self.spreadsheet), self.guild)
+        mitsos.generate_report()
+
+    # @QtCore.pyqtSlot(str)
+    def pass_message(self, category, string):
+        self.parent._log_message(category, string)
+
+
+class QTextEditLogger(logging.Handler):
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self.widget = QtWidgets.QPlainTextEdit(parent.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy)
+        parent.gridLayout.addWidget(self.widget, 7, 0, 4, 4)
+        self.widget.setReadOnly(True)
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.widget.appendPlainText(msg)
+        self.parent.main_window.resize(700, 650)
+
 
 if __name__ == "__main__":
     import sys
+    # qt5reactor.install()
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow(MainWindow)

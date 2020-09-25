@@ -11,7 +11,7 @@ from imminent.data.rio_scraping import RioScrapingSpider
 
 class GSheetsHandler():
 
-    def __init__(self, json_keyfile, sheet_name, guild):
+    def __init__(self, parent, json_keyfile, sheet_name, guild):
         self.guild = guild
         self.scope = ["https://spreadsheets.google.com/feeds",
                       "https://www.googleapis.com/auth/spreadsheets",

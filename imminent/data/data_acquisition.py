@@ -3,6 +3,7 @@ import json
 import os
 import ast
 import pytz
+import logging
 from pathlib import Path
 import requests
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ from imminent.utilities.file_handling import ResourceHandler
 from imminent.utilities.file_handling import FileHandler
 from imminent.data.rio_scraping import RioScrapingSpider
 
+_LOGGER = logging.getLogger('imminent.data_acquisition')
 enchant_list = ['FINGER_1',
                 'FINGER_2',
                 'MAIN_HAND',
@@ -44,26 +46,44 @@ class Data():
         """
         Gets the access token needed for OAuth2
         """
-        client_id = self._get_client_id()
-        client_secret = self._get_client_secret()
-        token_url = 'https://us.battle.net/oauth/token'
-        grant_type = 'client_credentials'
-        body_params = {'grant_type': grant_type}
-        response = requests.post(token_url, data=body_params,
-                                 auth=(client_id, client_secret))
-        token_raw = json.loads(response.text)
+        try:
+            client_id = self._get_client_id()
+            client_secret = self._get_client_secret()
+            token_url = 'https://us.battle.net/oauth/token'
+            grant_type = 'client_credentials'
+            body_params = {'grant_type': grant_type}
+            response = requests.post(token_url, data=body_params,
+                                     auth=(client_id, client_secret))
+            token_raw = json.loads(response.text)
+        except Exception as ex:
+            _LOGGER.error(
+                'Exception raised while trying to get the access token.\n' +
+                str(ex))
+            raise ex
         return token_raw["access_token"]
 
     def _get_client_id(self):
-        client_path = ResourceHandler().get_resource('client.json')
-        client = JSON(client_path)
-        client.load_setting()
+        try:
+            client_path = ResourceHandler().get_resource('client.json')
+            client = JSON(client_path)
+            client.load_setting()
+        except Exception as ex:
+            _LOGGER.error(
+                'Exception raised while trying to get the client id.\n' +
+                str(ex))
+            raise ex
         return client.get_value('id')
 
     def _get_client_secret(self):
-        client_path = ResourceHandler().get_resource('client.json')
-        client = JSON(client_path)
-        client.load_setting()
+        try:
+            client_path = ResourceHandler().get_resource('client.json')
+            client = JSON(client_path)
+            client.load_setting()
+        except Exception as ex:
+            _LOGGER.error(
+                'Exception raised while trying to get the client secret.\n' +
+                str(ex))
+            raise ex
         return client.get_value('secret')
 
     def _get_header(self):
@@ -75,7 +95,15 @@ class Data():
         headers = self._get_header()
         print(headers)
         print(url)
-        response = requests.get(url=url, headers=headers)
+        try:
+            _LOGGER.info('Reqesting Data from url : ' + url)
+            response = requests.get(url=url, headers=headers)
+        except Exception as ex:
+            _LOGGER.error(
+                'Exception raised while requesting data from the ' +
+                'following url :.\n' + url + '\n' +
+                str(ex))
+            raise ex
         return response
 
     def _get_url(self, category):

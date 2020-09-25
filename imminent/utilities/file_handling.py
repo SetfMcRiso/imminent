@@ -57,7 +57,7 @@ class ResourceHandler():
         resource_path = os.path.join(Path(__file__).parents[1],
                                      'resources',
                                      resource_name)
-        _LOGGER.info(f'Installed data file not found'
+        _LOGGER.info(f'Installed data file not found, '
                      + f'returning the resource folder path : {resource_path}')
         return os.path.join(Path(__file__).parents[1],
                             'resources',
